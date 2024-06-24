@@ -88,6 +88,7 @@ pub fn certs(
 ) -> impl Iterator<Item = Result<CertificateDer<'static>, io::Error>> + '_ {
     iter::from_fn(move || read_one(rd).transpose()).filter_map(|item| match item {
         Ok(Item::X509Certificate(cert)) => Some(Ok(cert)),
+        Ok(Item::RawPublicKeyCertificate(cert)) => Some(Ok(cert)),
         Err(err) => Some(Err(err)),
         _ => None,
     })
@@ -104,7 +105,7 @@ pub fn private_key(rd: &mut dyn io::BufRead) -> Result<Option<PrivateKeyDer<'sta
             Item::Pkcs1Key(key) => return Ok(Some(key.into())),
             Item::Pkcs8Key(key) => return Ok(Some(key.into())),
             Item::Sec1Key(key) => return Ok(Some(key.into())),
-            Item::X509Certificate(_) | Item::Crl(_) | Item::Csr(_) => continue,
+            Item::RawPublicKeyCertificate(_) | Item::X509Certificate(_) | Item::Crl(_) | Item::Csr(_) => continue,
         }
     }
 
@@ -126,7 +127,8 @@ pub fn csr(
             | Item::Pkcs8Key(_)
             | Item::Sec1Key(_)
             | Item::X509Certificate(_)
-            | Item::Crl(_) => continue,
+            | Item::Crl(_)
+            | Item::RawPublicKeyCertificate(_) => continue,
         }
     }
 
